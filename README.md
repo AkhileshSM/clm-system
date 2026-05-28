@@ -48,6 +48,23 @@ To start with the local AI (Ollama) container:
 docker-compose --profile ai up
 ```
 
+## Tests
+Run backend tests:
+```bash
+python3 -m pytest
+```
+
+Run backend tests with coverage:
+```bash
+python3 -m pytest --cov=app --cov-report=term-missing --cov-fail-under=70
+```
+
+Build the frontend:
+```bash
+cd frontend
+npm run build
+```
+
 ## Key Features
 - **Real-time Saturation Scoring**: Weighted metrics for tickets, incidents, and ownership.
 - **AI-Powered Redistribution**: Automatic suggestions to balance load across the team.

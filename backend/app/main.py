@@ -2,6 +2,7 @@ import os
 import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 from typing import List
 
 from .core.scoring import calculate_cognitive_load
@@ -18,11 +19,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATA_PATH = "mock-data/sprint_data.json"
+DATA_PATH = None
 data_provider: SprintsDataProvider | None = None
 
+def resolve_mock_data_path() -> Path:
+    configured_path = os.getenv("MOCK_DATA_PATH")
+    if configured_path:
+        return Path(configured_path).expanduser().resolve()
+
+    main_file = Path(__file__).resolve()
+    candidates = [
+        Path.cwd() / "mock-data" / "sprint_data.json",
+        main_file.parents[1] / "mock-data" / "sprint_data.json",
+        main_file.parents[2] / "mock-data" / "sprint_data.json",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    return candidates[-1]
+
 def get_data_provider() -> SprintsDataProvider:
-    global data_provider
+    global data_provider, DATA_PATH
     if data_provider is not None:
         return data_provider
 
@@ -30,6 +49,7 @@ def get_data_provider() -> SprintsDataProvider:
     if provider == "jira_mcp":
         data_provider = JiraMCPProvider()
     elif provider == "mock":
+        DATA_PATH = resolve_mock_data_path()
         data_provider = MockJiraProvider(DATA_PATH)
     else:
         raise ValueError(f"Unsupported DATA_PROVIDER: {provider}")
